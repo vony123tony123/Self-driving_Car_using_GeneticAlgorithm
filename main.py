@@ -72,40 +72,51 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         previous_best_fitness_value = 0
         mutation_rate = 0.3
         count_goal_epochs = 0
+
+        # Training Genetic Algorithm
         for i in range(max_epochs):
             print("------")
+
+            # Reproduce、Crossover、Mutation Steps
             genetic_pool = GA.reproduce(genetic_pool, fitness_values=fitness_values, top_percent = 0.25)
             genetic_pool = GA.crossover(genetic_pool)
             genetic_pool = GA.mutation(genetic_pool, mutation_rate = mutation_rate)
             print(f'mutation_rate = {mutation_rate}')
 
+            # Calculate fitness value for all genetics
             progress = tqdm(total=len(genetic_pool))
-
             for genetic in genetic_pool:
                 value = GA.fitness_function_step(genetic)
                 fitness_values.append(value)
                 progress.set_description('Fitness')
                 progress.update(1)
             fitness_values = np.array(fitness_values)
+
+            # Choose the genetic with best genetic
             best_genetic = genetic_pool[np.argmax(fitness_values)]
             print("")
             print(f'{i}/{max_epochs-1}: steps = {np.max(fitness_values)}')
 
+            # early stop epochs
             if max(fitness_values) > 10000:
                 with open('goal_result.txt', 'a') as f:
                     f.write(f'{best_genetic}\n')
-                count_goal_epochs += 1            
+                count_goal_epochs += 1
+            if count_goal_epochs >= 5:
+                break            
 
+            # add mutation rate when the fitness value stop or regress
             if max(fitness_values) <= previous_best_fitness_value:
                 mutation_rate += 0.05
                 if mutation_rate > 0.9:
                     mutation_rate = 0.9
-
+            
             previous_best_fitness_value = max(fitness_values) if len(fitness_values) != 0 else 0
             fitness_values = []
-            if count_goal_epochs >= 5:
-                break
         
+        '''
+        Feed genes into RBFN network. Use resulting network to guide autonomous vehicle from start and plot travel path.
+        '''
         self.RBFN = RBFN()
         delta, w_list, m_list, std_list = GA.decode(best_genetic)
         self.RBFN.setParams(delta, w_list, m_list, std_list)
@@ -132,11 +143,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             cross_points = []
             for sensor_vector in sensor_vectors:
                 cross_point = drawPlot.findCrossPoint(self.boarder_points, point, sensor_vector)
-                #self.canva.drawPoint(cross_point, 'r')
+                #=self.canva.drawPoint(cross_point, 'r')
                 distance = toolkit.euclid_distance(cross_point, point)
                 cross_points.append(cross_point)
                 sensor_distances.append(distance)
             sensor_distances = np.array(sensor_distances).flatten()
+            self.canva.drawSensor(cross_points)
             theta = self.RBFN.predict(sensor_distances)
             if drawPlot.is_Crash(point, self.boarder_points):
                 raise Exception("touch the wall of map")

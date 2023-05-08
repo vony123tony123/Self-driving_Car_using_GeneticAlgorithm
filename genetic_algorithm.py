@@ -121,7 +121,7 @@ def decode(genetic):
     return delta, w_list, m_list, std_list
 
 
-#讓基因產生predict與dataset中的ans 計算 mean loss
+#fitness_function 方案一: 讓基因產生predict與dataset中的ans 計算 mean loss(費時太久)
 def fitness_function(genetic):
     delta, w, m, std = decode(genetic)
     ME = 0
@@ -134,7 +134,7 @@ def fitness_function(genetic):
     ME = ME / len(dataset)
     return ME
 
-#讓基因實際去跑map
+#fitness_function 方案二: 讓基因實際去跑map(費時短)
 def fitness_function_step(genetic, mapFilePath="map.txt"):
     delta, w, m, std = decode(genetic)
     rbfn = RBFN()

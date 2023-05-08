@@ -42,10 +42,16 @@ class drawPlot(FigureCanvas):
 		self.ax.add_patch(Rectangle((self.goal_points[0,0], self.goal_points[1,1]), 
 			  width = self.goal_points[1,0] - self.goal_points[0,0], height = self.goal_points[0,1] - self.goal_points[1,1]))
 		if self.points:
-			for point in self.points:
-				if point[2] == 'b':
-					self.ax.add_patch(Circle(point[:2], RADIUS, fill = False))
-				self.ax.scatter(point[0], point[1], color=point[2])
+			point = self.points[-1]
+			if point[2] == 'b':
+				self.ax.add_patch(Circle(point[:2], RADIUS, fill = False))
+			for point_i in self.points:
+				self.ax.scatter(point_i[0], point_i[1], color='b')
+		for cross_point in self.cross_points:
+			self.ax.scatter(cross_point[0], cross_point[1], c=[[0,1,0]])
+			distance = toolkit.euclid_distance(cross_point, point[:-1])
+			self.ax.text(cross_point[0]-0.5, cross_point[1]+0.5, round(distance,2))
+			self.ax.plot([cross_point[0], point[0]], [cross_point[1], point[1]], 'g')
 		self.draw()
 
 	def readMapFile(mapFile):
@@ -137,6 +143,9 @@ class drawPlot(FigureCanvas):
 			if distance < 2.8:
 				return True
 		return False
+
+	def drawSensor(self, cross_points):
+		self.cross_points = cross_points
 
 
 if __name__ == "__main__":
